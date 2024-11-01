@@ -1,9 +1,8 @@
 from spacy.lang.en.stop_words import STOP_WORDS
 from org.apache.lucene.analysis import Analyzer
 from org.apache.pylucene.analysis import PythonAnalyzer
-from org.apache.lucene.analysis.standard import StandardTokenizer, StandardAnalyzer
+from org.apache.lucene.analysis.standard import StandardTokenizer
 from org.apache.lucene.analysis.core import StopFilter, LowerCaseFilter
-from org.apache.lucene.analysis.ngram import NGramTokenFilter
 from org.apache.lucene.analysis.en import PorterStemFilter
 from org.apache.lucene.analysis.shingle import ShingleFilter
 from org.apache.lucene.analysis import CharArraySet
@@ -11,7 +10,7 @@ from org.apache.lucene.analysis.pattern import PatternReplaceFilter
 from java.util.regex import Pattern
 
 
-from org.apache.lucene.analysis.core import LowerCaseFilter, WhitespaceTokenizer
+from org.apache.lucene.analysis.core import LowerCaseFilter
 from org.apache.pylucene.analysis import PythonAnalyzer
 from org.apache.lucene.analysis import Analyzer
 

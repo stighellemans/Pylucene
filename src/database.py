@@ -13,14 +13,12 @@ from org.apache.lucene.index import (
     IndexWriterConfig,
     IndexWriter,
     DirectoryReader,
-    IndexOptions,
 )
 from org.apache.lucene.document import (
     Document,
     TextField,
     Field,
     StoredField,
-    FieldType,
 )
 from org.apache.lucene.util import BytesRefIterator
 from org.apache.lucene.search.similarities import ClassicSimilarity, BM25Similarity
