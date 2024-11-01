@@ -9,8 +9,19 @@ from java.nio.file import Paths
 from org.apache.lucene.analysis import Analyzer
 from org.apache.lucene.store import FSDirectory
 from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.index import IndexWriterConfig, IndexWriter, DirectoryReader, IndexOptions
-from org.apache.lucene.document import Document, TextField, Field, StoredField, FieldType
+from org.apache.lucene.index import (
+    IndexWriterConfig,
+    IndexWriter,
+    DirectoryReader,
+    IndexOptions,
+)
+from org.apache.lucene.document import (
+    Document,
+    TextField,
+    Field,
+    StoredField,
+    FieldType,
+)
 from org.apache.lucene.util import BytesRefIterator
 from org.apache.lucene.search.similarities import ClassicSimilarity, BM25Similarity
 
@@ -19,15 +30,17 @@ QueryID = int
 DocID = int
 
 
-def index_txt_file(ind_writer: IndexWriter, file_path: str, doc_id: DocID, store_original:bool=True):
-    
+def index_txt_file(
+    ind_writer: IndexWriter, file_path: str, doc_id: DocID, store_original: bool = True
+):
+
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             text_to_index = f.read()
     except UnicodeDecodeError:
         print(f"Skipping file {file_path} due to encoding issues.")
         return
-    
+
     # choose if you want to store the original text to display alongside search results
     if store_original:
         store = Field.Store.YES
@@ -36,12 +49,19 @@ def index_txt_file(ind_writer: IndexWriter, file_path: str, doc_id: DocID, store
 
     doc = Document()
     doc.add(TextField("text_content", text_to_index, store))
-    doc.add(StoredField("doc_id", doc_id))    # For retrieval
+    doc.add(StoredField("doc_id", doc_id))  # For retrieval
 
     ind_writer.addDocument(doc)
 
-def make_database(doc_paths: Dict[DocID, str], index_directory: str, custom_analyzer: Optional[Analyzer]=None, 
-                  similarity:str="BM25", store_original:bool=True, batch_size: int=5000) -> None:
+
+def make_database(
+    doc_paths: Dict[DocID, str],
+    index_directory: str,
+    custom_analyzer: Optional[Analyzer] = None,
+    similarity: str = "BM25",
+    store_original: bool = True,
+    batch_size: int = 5000,
+) -> None:
     if custom_analyzer is None:
         analyzer = StandardAnalyzer()
     else:
@@ -54,17 +74,19 @@ def make_database(doc_paths: Dict[DocID, str], index_directory: str, custom_anal
         config.setSimilarity(ClassicSimilarity())
     else:
         raise ValueError(f"{similarity} similarity not implemented.")
-    
+
     # Ensure the index directory exists + remove old indices
     if os.path.exists(index_directory):
         shutil.rmtree(index_directory)
     os.makedirs(index_directory)
     index_dir = FSDirectory.open(Paths.get(index_directory))
-    
+
     writer = IndexWriter(index_dir, config)
-    
+
     try:
-        for i, (doc_id, file_path) in enumerate(tqdm(list(doc_paths.items()), desc="Indexing documents")):
+        for i, (doc_id, file_path) in enumerate(
+            tqdm(list(doc_paths.items()), desc="Indexing documents")
+        ):
             index_txt_file(writer, file_path, doc_id, store_original)
             if (i + 1) % batch_size == 0:
                 writer.commit()
@@ -93,7 +115,7 @@ def get_vocabulary(index_dir, field_name="text_content", max_terms=None):
         # Loop through each leaf (segment) in the index
         for leaf in reader.leaves():
             leaf_reader = leaf.reader()
-            
+
             # Get terms for the specific field in this segment
             terms = leaf_reader.terms(field_name)
             if terms is not None:
@@ -108,7 +130,7 @@ def get_vocabulary(index_dir, field_name="text_content", max_terms=None):
     finally:
         # Close the reader
         reader.close()
-    
+
     return vocabulary
 
 

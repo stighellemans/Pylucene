@@ -7,7 +7,12 @@ from org.apache.lucene.analysis.standard import StandardAnalyzer
 from org.apache.lucene.analysis.tokenattributes import CharTermAttribute
 from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause, FuzzyQuery
+from org.apache.lucene.search import (
+    IndexSearcher,
+    BooleanQuery,
+    BooleanClause,
+    FuzzyQuery,
+)
 from org.apache.lucene.store import FSDirectory
 from java.nio.file import Paths
 from org.apache.lucene.search.similarities import ClassicSimilarity, BM25Similarity
@@ -15,8 +20,14 @@ from java.io import StringReader
 
 DocID = int
 
-def query_database(index_directory: str, query_str: str, top_k=10, similarity: str="BM25", custom_analyzer: Optional[Analyzer]=None
-                   ) -> List[Tuple[DocID, float]]:
+
+def query_database(
+    index_directory: str,
+    query_str: str,
+    top_k=10,
+    similarity: str = "BM25",
+    custom_analyzer: Optional[Analyzer] = None,
+) -> List[Tuple[DocID, float]]:
     """Search for a query in the index and return the top k results."""
     if custom_analyzer is None:
         analyzer = StandardAnalyzer()
@@ -38,12 +49,16 @@ def query_database(index_directory: str, query_str: str, top_k=10, similarity: s
 
     # Process the query
     query_parser = QueryParser("text_content", analyzer)
-    query_str = re.sub(r'[*?[\]{}/:()^]+', '', query_str)  # Preprocess query to remove special symbols
+    query_str = re.sub(
+        r"[*?[\]{}/:()^]+", "", query_str
+    )  # Preprocess query to remove special symbols
 
     try:
         query = query_parser.parse(query_str)
         hits = searcher.search(query, top_k).scoreDocs
-        results = [(int(searcher.doc(hit.doc).get("doc_id")), hit.score) for hit in hits]
+        results = [
+            (int(searcher.doc(hit.doc).get("doc_id")), hit.score) for hit in hits
+        ]
     except Exception as e:
         print(f"Query parsing failed for '{query_str}': {e}")
         results = []  # Return an empty result for this query
@@ -52,8 +67,14 @@ def query_database(index_directory: str, query_str: str, top_k=10, similarity: s
     return results
 
 
-def fuzzy_query_database(index_directory: str, query_str: str, top_k=10, similarity: str="BM25", custom_analyzer: Optional[Analyzer]=None, fuzziness: int=1
-                                               ) -> List[Tuple[DocID, float]]:
+def fuzzy_query_database(
+    index_directory: str,
+    query_str: str,
+    top_k=10,
+    similarity: str = "BM25",
+    custom_analyzer: Optional[Analyzer] = None,
+    fuzziness: int = 1,
+) -> List[Tuple[DocID, float]]:
     """Search for a fuzzy query in the index with analyzer processing and return the top k results."""
     if custom_analyzer is None:
         analyzer = StandardAnalyzer()
@@ -75,7 +96,9 @@ def fuzzy_query_database(index_directory: str, query_str: str, top_k=10, similar
 
     # Step 1: Analyze the query string to get processed tokens
     stream = analyzer.tokenStream("", StringReader(query_str))
-    char_term_attr = stream.addAttribute(CharTermAttribute.class_)  # Use CharTermAttribute.class_
+    char_term_attr = stream.addAttribute(
+        CharTermAttribute.class_
+    )  # Use CharTermAttribute.class_
     stream.reset()
     tokens = []
     while stream.incrementToken():
@@ -96,7 +119,6 @@ def fuzzy_query_database(index_directory: str, query_str: str, top_k=10, similar
 
     reader.close()
     return results
-
 
 
 if __name__ == "__main__":
