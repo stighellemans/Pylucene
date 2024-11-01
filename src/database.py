@@ -9,9 +9,8 @@ from java.nio.file import Paths
 from org.apache.lucene.analysis import Analyzer
 from org.apache.lucene.store import FSDirectory
 from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.index import IndexWriterConfig, IndexWriter, DirectoryReader
-from org.apache.lucene.index import IndexWriter
-from org.apache.lucene.document import Document, TextField, Field, StoredField, IntPoint
+from org.apache.lucene.index import IndexWriterConfig, IndexWriter, DirectoryReader, IndexOptions
+from org.apache.lucene.document import Document, TextField, Field, StoredField, FieldType
 from org.apache.lucene.util import BytesRefIterator
 from org.apache.lucene.search.similarities import ClassicSimilarity, BM25Similarity
 
@@ -20,8 +19,8 @@ QueryID = int
 DocID = int
 
 
-def index_txt_file(ind_writer: IndexWriter, file_path: str, doc_id: DocID):
-    doc = Document()
+def index_txt_file(ind_writer: IndexWriter, file_path: str, doc_id: DocID, store_original:bool=True):
+    
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             text_to_index = f.read()
@@ -29,13 +28,20 @@ def index_txt_file(ind_writer: IndexWriter, file_path: str, doc_id: DocID):
         print(f"Skipping file {file_path} due to encoding issues.")
         return
     
-    doc.add(TextField("text_content", text_to_index, Field.Store.YES))
-    doc.add(IntPoint("doc_id", doc_id))      # For indexing
+    # choose if you want to store the original text to display alongside search results
+    if store_original:
+        store = Field.Store.YES
+    else:
+        store = Field.Store.NO
+
+    doc = Document()
+    doc.add(TextField("text_content", text_to_index, store))
     doc.add(StoredField("doc_id", doc_id))    # For retrieval
 
     ind_writer.addDocument(doc)
 
-def make_database(doc_paths: Dict[DocID, str], index_directory: str, custom_analyzer: Optional[Analyzer]=None, similarity:str="BM25", batch_size: int=5000) -> None:
+def make_database(doc_paths: Dict[DocID, str], index_directory: str, custom_analyzer: Optional[Analyzer]=None, 
+                  similarity:str="BM25", store_original:bool=True, batch_size: int=5000) -> None:
     if custom_analyzer is None:
         analyzer = StandardAnalyzer()
     else:
@@ -59,7 +65,7 @@ def make_database(doc_paths: Dict[DocID, str], index_directory: str, custom_anal
     
     try:
         for i, (doc_id, file_path) in enumerate(tqdm(list(doc_paths.items()), desc="Indexing documents")):
-            index_txt_file(writer, file_path, doc_id)
+            index_txt_file(writer, file_path, doc_id, store_original)
             if (i + 1) % batch_size == 0:
                 writer.commit()
     finally:

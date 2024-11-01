@@ -48,9 +48,12 @@ class WordLevelNGramAnalyzer(PythonAnalyzer):
     def __init__(self, stop_words=None, min_gram=2, max_gram=3):
         PythonAnalyzer.__init__(self)
         if stop_words is None:
-            self.stop_words = StandardAnalyzer.ENGLISH_STOP_WORDS_SET
-        else:
-            self.stop_words = CharArraySet(stop_words)
+            stop_words = STOP_WORDS
+
+        self.stop_word_set = CharArraySet(len(stop_words), True)
+        for word in stop_words:
+            self.stop_word_set.add(word)
+        
         self.min_gram = min_gram
         self.max_gram = max_gram
 
@@ -62,36 +65,10 @@ class WordLevelNGramAnalyzer(PythonAnalyzer):
         tokenStream = LowerCaseFilter(tokenizer)
         
         # Step 3: Remove stop words
-        tokenStream = StopFilter(tokenStream, self.stop_words)
+        tokenStream = StopFilter(tokenStream, self.stop_word_set)
         
         # Step 4: Generate word-level N-grams
         tokenStream = ShingleFilter(tokenStream, self.min_gram, self.max_gram)
-        
-        return Analyzer.TokenStreamComponents(tokenizer, tokenStream)
-    
-
-
-class CharacterLevelNGramAnalyzer(Analyzer):
-    def __init__(self, min_gram=2, max_gram=3, stop_words=None):
-        self.min_gram = min_gram
-        self.max_gram = max_gram
-        if stop_words is None:
-            self.stop_words = StandardAnalyzer.ENGLISH_STOP_WORDS_SET
-        else:
-            self.stop_words = CharArraySet(stop_words)
-
-    def createComponents(self, fieldName):
-        # Step 1: Tokenize the text
-        tokenizer = StandardTokenizer()
-        
-        # Step 2: Convert tokens to lowercase
-        tokenStream = LowerCaseFilter(tokenizer)
-        
-        # Step 3: Remove stop words
-        tokenStream = StopFilter(tokenStream, self.stop_words)
-        
-        # Step 4: Generate character-level n-grams
-        tokenStream = NGramTokenFilter(tokenStream, self.min_gram, self.max_gram)
         
         return Analyzer.TokenStreamComponents(tokenizer, tokenStream)
 
